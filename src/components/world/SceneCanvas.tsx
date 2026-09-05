@@ -1,9 +1,12 @@
-import React, { useRef } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import React from 'react';
+import { Canvas } from '@react-three/fiber';
 import { OrthographicCamera } from '@react-three/drei';
-import * as THREE from 'three';
 import { IslandTerrain } from './IslandTerrain';
 import { PlayerVehicle } from './PlayerVehicle';
+import { PlayerMotorcycle } from './PlayerMotorcycle';
+import { WalkingCharacters } from './WalkingCharacters';
+import { FireworksDisplay } from './FireworksDisplay';
+import { CinematicCamera } from './CinematicCamera';
 import { BirthdayCakeObject } from './BirthdayCakeObject';
 import { MailboxObject } from './MailboxObject';
 import { JukeboxObject } from './JukeboxObject';
@@ -14,57 +17,46 @@ import { BalloonsField } from './BalloonsField';
 import { SkyAndAtmosphere } from './SkyAndAtmosphere';
 import { TreasureHuntGems } from './TreasureHuntGems';
 import { LANDMARK_POSITIONS } from '../../utils/constants';
-import { LandmarkType, TimeOfDay, TreasureShard } from '../../types';
-
-interface CameraFollowProps {
-  targetPosition: [number, number, number];
-}
-
-const CameraFollow: React.FC<CameraFollowProps> = ({ targetPosition }) => {
-  const { camera } = useThree();
-  const currentTarget = useRef(new THREE.Vector3(...targetPosition));
-
-  useFrame(() => {
-    currentTarget.current.x = THREE.MathUtils.lerp(
-      currentTarget.current.x,
-      targetPosition[0],
-      0.06
-    );
-    currentTarget.current.z = THREE.MathUtils.lerp(
-      currentTarget.current.z,
-      targetPosition[2],
-      0.06
-    );
-
-    const isoOffset = 22;
-    camera.position.x = currentTarget.current.x + isoOffset;
-    camera.position.y = isoOffset + 5;
-    camera.position.z = currentTarget.current.z + isoOffset;
-
-    camera.lookAt(currentTarget.current.x, 0.70, currentTarget.current.z);
-  });
-
-  return null;
-};
+import { LandmarkType, TimeOfDay, TreasureShard, TravelMode, WalkingPartnerState } from '../../types';
 
 interface SceneCanvasProps {
   playerPos: [number, number, number];
   onUpdatePlayerPos: (pos: [number, number, number]) => void;
+  carPos: [number, number, number];
+  onUpdateCarPos: (pos: [number, number, number]) => void;
+  motorPos: [number, number, number];
+  onUpdateMotorPos: (pos: [number, number, number]) => void;
+  travelMode: TravelMode;
+  partnerState: WalkingPartnerState;
+  onPartnerStateChange: (state: WalkingPartnerState) => void;
   joystickInput: { x: number; y: number };
   onOpenLandmark: (type: LandmarkType) => void;
   timeOfDay: TimeOfDay;
   shards: TreasureShard[];
   onCollectShard: (id: number) => void;
+  fireworksActive: boolean;
+  isCinematicTour: boolean;
+  onCinematicTourEnd: () => void;
 }
 
 export const SceneCanvas: React.FC<SceneCanvasProps> = ({
   playerPos,
   onUpdatePlayerPos,
+  carPos,
+  onUpdateCarPos,
+  motorPos,
+  onUpdateMotorPos,
+  travelMode,
+  partnerState,
+  onPartnerStateChange,
   joystickInput,
   onOpenLandmark,
   timeOfDay,
   shards,
   onCollectShard,
+  fireworksActive,
+  isCinematicTour,
+  onCinematicTourEnd,
 }) => {
   const isNight = timeOfDay === 'night';
 
@@ -90,7 +82,12 @@ export const SceneCanvas: React.FC<SceneCanvasProps> = ({
           far={150}
         />
 
-        <CameraFollow targetPosition={playerPos} />
+        {/* Dynamic / Tour Camera */}
+        <CinematicCamera
+          isTouring={isCinematicTour}
+          onTourEnd={onCinematicTourEnd}
+          targetPosition={playerPos}
+        />
 
         {/* Dynamic Sky, Sun, Stars & Atmosphere Lighting */}
         <SkyAndAtmosphere timeOfDay={timeOfDay} />
@@ -98,13 +95,42 @@ export const SceneCanvas: React.FC<SceneCanvasProps> = ({
         {/* Natural Organic Beach & Central Heart Lawn Terrain */}
         <IslandTerrain timeOfDay={timeOfDay} />
 
-        {/* Driveable Player Vehicle with Chibi Mas Jo & Dinda */}
+        {/* 1. Convertible Car (Active when travelMode === 'car') */}
         <PlayerVehicle
-          initialPosition={[0, 0.06, 5]}
+          initialPosition={carPos}
+          joystickInput={joystickInput}
+          onPositionUpdate={(pos) => {
+            onUpdateCarPos(pos);
+            if (travelMode === 'car') onUpdatePlayerPos(pos);
+          }}
+          isNight={isNight}
+          active={travelMode === 'car'}
+        />
+
+        {/* 2. Retro Vespa Motorcycle (Active when travelMode === 'motor') */}
+        <PlayerMotorcycle
+          initialPosition={motorPos}
+          joystickInput={joystickInput}
+          onPositionUpdate={(pos) => {
+            onUpdateMotorPos(pos);
+            if (travelMode === 'motor') onUpdatePlayerPos(pos);
+          }}
+          isNight={isNight}
+          active={travelMode === 'motor'}
+        />
+
+        {/* 3. On-Foot Walking Characters (Active when travelMode === 'walking') */}
+        <WalkingCharacters
+          initialPosition={playerPos}
           joystickInput={joystickInput}
           onPositionUpdate={onUpdatePlayerPos}
-          isNight={isNight}
+          partnerState={partnerState}
+          onPartnerStateChange={onPartnerStateChange}
+          active={travelMode === 'walking'}
         />
+
+        {/* 4. Fireworks Display Celebration at Cake Plaza */}
+        <FireworksDisplay active={fireworksActive} />
 
         {/* 3D Interactive Landmarks */}
         <BirthdayCakeObject

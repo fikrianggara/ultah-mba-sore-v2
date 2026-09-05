@@ -68,3 +68,13 @@ export interface TreasureShard {
   isCollected: boolean;
   color: string;
 }
+
+export type TravelMode = 'car' | 'motor' | 'walking';
+
+export type WalkingPartnerState = 'holding_hands' | 'roaming' | 'returning';
+
+export interface EntityTransform {
+  position: [number, number, number];
+  rotation: number;
+}
+

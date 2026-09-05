@@ -10,6 +10,7 @@ interface PlayerVehicleProps {
   joystickInput: { x: number; y: number };
   onPositionUpdate: (pos: [number, number, number]) => void;
   isNight?: boolean;
+  active?: boolean;
 }
 
 export const PlayerVehicle: React.FC<PlayerVehicleProps> = ({
@@ -17,6 +18,7 @@ export const PlayerVehicle: React.FC<PlayerVehicleProps> = ({
   joystickInput,
   onPositionUpdate,
   isNight = false,
+  active = true,
 }) => {
   const vehicleRef = useRef<THREE.Group>(null);
   const wheelsRef = useRef<THREE.Group[]>([]);
@@ -45,6 +47,8 @@ export const PlayerVehicle: React.FC<PlayerVehicleProps> = ({
   });
 
   useEffect(() => {
+    if (!active) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
         e.preventDefault();
@@ -70,10 +74,16 @@ export const PlayerVehicle: React.FC<PlayerVehicleProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [active]);
 
   useFrame(() => {
     if (!vehicleRef.current) return;
+
+    if (!active) {
+      vehicleRef.current.position.set(pos.current.x, 0.06, pos.current.z);
+      vehicleRef.current.rotation.y = rotationY.current;
+      return;
+    }
 
     let throttle = 0;
     let steering = 0;
@@ -212,92 +222,95 @@ export const PlayerVehicle: React.FC<PlayerVehicleProps> = ({
       {/* =================================================== */}
       {/* CHIBI PASSENGERS: MAS JO & DINDA ("MBA SORE")       */}
       {/* =================================================== */}
-
-      {/* Driver: Chibi Mas Jo (Left Seat) */}
-      <group position={[-0.32, 0, -0.05]}>
-        {/* Torso (Navy Blue Polo) */}
-        <mesh position={[0, 0.60, 0]} castShadow>
-          <boxGeometry args={[0.32, 0.32, 0.24]} />
-          <meshStandardMaterial color="#1D3557" roughness={0.6} />
-        </mesh>
-        {/* Head & Hair */}
-        <group ref={joHeadRef} position={[0, 0.88, 0]}>
-          <mesh castShadow>
-            <sphereGeometry args={[0.18, 16, 16]} />
-            <meshStandardMaterial color="#FCD5B5" roughness={0.5} />
-          </mesh>
-          {/* Black Stylized Hair */}
-          <mesh position={[0, 0.06, -0.02]}>
-            <sphereGeometry args={[0.19, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
-            <meshStandardMaterial color="#1A1A1A" roughness={0.8} />
-          </mesh>
-          {/* Friendly Eyes */}
-          <mesh position={[-0.06, 0.02, 0.16]}>
-            <sphereGeometry args={[0.025, 8, 8]} />
-            <meshStandardMaterial color="#111111" />
-          </mesh>
-          <mesh position={[0.06, 0.02, 0.16]}>
-            <sphereGeometry args={[0.025, 8, 8]} />
-            <meshStandardMaterial color="#111111" />
-          </mesh>
-        </group>
-      </group>
-
-      {/* Passenger: Chibi Dinda ("Mba Sore") (Right Seat) */}
-      <group position={[0.32, 0, -0.05]}>
-        {/* Torso (Cute Pastel Pink Dress) */}
-        <mesh position={[0, 0.60, 0]} castShadow>
-          <boxGeometry args={[0.32, 0.32, 0.24]} />
-          <meshStandardMaterial color="#FFB6C1" roughness={0.5} />
-        </mesh>
-        {/* Head & Hair/Hijab with Birthday Crown */}
-        <group ref={dindaHeadRef} position={[0, 0.88, 0]}>
-          {/* Face */}
-          <mesh castShadow>
-            <sphereGeometry args={[0.18, 16, 16]} />
-            <meshStandardMaterial color="#FCD5B5" roughness={0.5} />
-          </mesh>
-          {/* Cute Soft Hijab / Hair */}
-          <mesh position={[0, 0.04, -0.03]}>
-            <sphereGeometry args={[0.20, 14, 14]} />
-            <meshStandardMaterial color="#FFE4E1" roughness={0.6} />
-          </mesh>
-          {/* Eyes & Blushing Cheeks */}
-          <mesh position={[-0.06, 0.02, 0.16]}>
-            <sphereGeometry args={[0.025, 8, 8]} />
-            <meshStandardMaterial color="#111111" />
-          </mesh>
-          <mesh position={[0.06, 0.02, 0.16]}>
-            <sphereGeometry args={[0.025, 8, 8]} />
-            <meshStandardMaterial color="#111111" />
-          </mesh>
-          {/* Blush spots */}
-          <mesh position={[-0.10, -0.03, 0.14]}>
-            <circleGeometry args={[0.025, 8]} />
-            <meshStandardMaterial color="#FF69B4" />
-          </mesh>
-          <mesh position={[0.10, -0.03, 0.14]}>
-            <circleGeometry args={[0.025, 8]} />
-            <meshStandardMaterial color="#FF69B4" />
-          </mesh>
-          {/* Golden Birthday Crown on Dinda's Head */}
-          <group position={[0, 0.20, 0]}>
-            <mesh>
-              <cylinderGeometry args={[0.09, 0.07, 0.08, 5]} />
-              <meshStandardMaterial color="#FFD700" metalness={0.7} roughness={0.2} />
+      {active && (
+        <>
+          {/* Driver: Chibi Mas Jo (Left Seat) */}
+          <group position={[-0.32, 0, -0.05]}>
+            {/* Torso (Navy Blue Polo) */}
+            <mesh position={[0, 0.60, 0]} castShadow>
+              <boxGeometry args={[0.32, 0.32, 0.24]} />
+              <meshStandardMaterial color="#1D3557" roughness={0.6} />
             </mesh>
-            <mesh position={[0, 0.05, 0]}>
-              <sphereGeometry args={[0.03, 8, 8]} />
-              <meshStandardMaterial color="#FF1493" emissive="#FF69B4" emissiveIntensity={0.8} />
+            {/* Head & Hair */}
+            <group ref={joHeadRef} position={[0, 0.88, 0]}>
+              <mesh castShadow>
+                <sphereGeometry args={[0.18, 16, 16]} />
+                <meshStandardMaterial color="#FCD5B5" roughness={0.5} />
+              </mesh>
+              {/* Black Stylized Hair */}
+              <mesh position={[0, 0.06, -0.02]}>
+                <sphereGeometry args={[0.19, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />
+                <meshStandardMaterial color="#1A1A1A" roughness={0.8} />
+              </mesh>
+              {/* Friendly Eyes */}
+              <mesh position={[-0.06, 0.02, 0.16]}>
+                <sphereGeometry args={[0.025, 8, 8]} />
+                <meshStandardMaterial color="#111111" />
+              </mesh>
+              <mesh position={[0.06, 0.02, 0.16]}>
+                <sphereGeometry args={[0.025, 8, 8]} />
+                <meshStandardMaterial color="#111111" />
+              </mesh>
+            </group>
+          </group>
+
+          {/* Passenger: Chibi Dinda ("Mba Sore") (Right Seat) */}
+          <group position={[0.32, 0, -0.05]}>
+            {/* Torso (Cute Pastel Pink Dress) */}
+            <mesh position={[0, 0.60, 0]} castShadow>
+              <boxGeometry args={[0.32, 0.32, 0.24]} />
+              <meshStandardMaterial color="#FFB6C1" roughness={0.5} />
+            </mesh>
+            {/* Head & Hair/Hijab with Birthday Crown */}
+            <group ref={dindaHeadRef} position={[0, 0.88, 0]}>
+              {/* Face */}
+              <mesh castShadow>
+                <sphereGeometry args={[0.18, 16, 16]} />
+                <meshStandardMaterial color="#FCD5B5" roughness={0.5} />
+              </mesh>
+              {/* Cute Soft Hijab / Hair */}
+              <mesh position={[0, 0.04, -0.03]}>
+                <sphereGeometry args={[0.20, 14, 14]} />
+                <meshStandardMaterial color="#FFE4E1" roughness={0.6} />
+              </mesh>
+              {/* Eyes & Blushing Cheeks */}
+              <mesh position={[-0.06, 0.02, 0.16]}>
+                <sphereGeometry args={[0.025, 8, 8]} />
+                <meshStandardMaterial color="#111111" />
+              </mesh>
+              <mesh position={[0.06, 0.02, 0.16]}>
+                <sphereGeometry args={[0.025, 8, 8]} />
+                <meshStandardMaterial color="#111111" />
+              </mesh>
+              {/* Blush spots */}
+              <mesh position={[-0.10, -0.03, 0.14]}>
+                <circleGeometry args={[0.025, 8]} />
+                <meshStandardMaterial color="#FF69B4" />
+              </mesh>
+              <mesh position={[0.10, -0.03, 0.14]}>
+                <circleGeometry args={[0.025, 8]} />
+                <meshStandardMaterial color="#FF69B4" />
+              </mesh>
+              {/* Golden Birthday Crown on Dinda's Head */}
+              <group position={[0, 0.20, 0]}>
+                <mesh>
+                  <cylinderGeometry args={[0.09, 0.07, 0.08, 5]} />
+                  <meshStandardMaterial color="#FFD700" metalness={0.7} roughness={0.2} />
+                </mesh>
+                <mesh position={[0, 0.05, 0]}>
+                  <sphereGeometry args={[0.03, 8, 8]} />
+                  <meshStandardMaterial color="#FF1493" emissive="#FF69B4" emissiveIntensity={0.8} />
+                </mesh>
+              </group>
+            </group>
+            {/* Waving Hand */}
+            <mesh position={[0.20, 0.70, 0.10]} rotation={[0.4, 0, -0.6]}>
+              <cylinderGeometry args={[0.035, 0.035, 0.22, 6]} />
+              <meshStandardMaterial color="#FCD5B5" />
             </mesh>
           </group>
-        </group>
-        {/* Waving Hand */}
-        <mesh position={[0.20, 0.70, 0.10]} rotation={[0.4, 0, -0.6]}>
-          <cylinderGeometry args={[0.035, 0.035, 0.22, 6]} />
-          <meshStandardMaterial color="#FCD5B5" />
-        </mesh>
-      </group>
+        </>
+      )}
 
       {/* Front Grille & Bumper */}
       <mesh position={[0, 0.38, 1.05]} castShadow>

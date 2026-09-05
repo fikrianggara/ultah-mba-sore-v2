@@ -148,6 +148,22 @@ export const ScrapbookModal: React.FC<ScrapbookModalProps> = ({ isOpen, onClose 
     }
   };
 
+  const touchStartX = React.useRef<number>(0);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.changedTouches[0].clientX;
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchEndX - touchStartX.current;
+    if (diff > 50) {
+      prevPage();
+    } else if (diff < -50) {
+      nextPage();
+    }
+  };
+
   const activePageData = PAGES[currentPage];
 
   return (
@@ -157,7 +173,7 @@ export const ScrapbookModal: React.FC<ScrapbookModalProps> = ({ isOpen, onClose 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-3 sm:p-6 select-none"
           onClick={onClose}
         >
           <motion.div
@@ -167,6 +183,8 @@ export const ScrapbookModal: React.FC<ScrapbookModalProps> = ({ isOpen, onClose 
             transition={{ type: 'spring', damping: 25 }}
             className="w-full max-w-2xl bg-gradient-to-br from-[#FFFDF9] via-[#FFF9F6] to-[#FFF0F4] rounded-3xl shadow-2xl border-2 border-pink-200 flex flex-col overflow-hidden relative"
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
           >
             {/* Modal Header */}
             <div className="p-4 sm:p-5 border-b border-pink-100 flex items-center justify-between bg-white/70 backdrop-blur-sm">

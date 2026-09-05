@@ -122,6 +122,162 @@ class SoundEffectManager {
       });
     } catch {}
   }
+
+  // Soft footstep sound for walking on grass or ground
+  playFootstep() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(140 + Math.random() * 30, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.06);
+
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.06);
+    } catch {}
+  }
+
+  // Cute retro scooter horn ("Pip-pip!")
+  playMotorHorn() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      [0, 0.1].forEach((delay) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, now + delay);
+
+        gain.gain.setValueAtTime(0.25, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.07);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + delay);
+        osc.stop(now + delay + 0.07);
+      });
+    } catch {}
+  }
+
+  // Romantic / cheerful whistle to call Mas Jo
+  playCallPartner() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(659.25, now); // E5
+      osc.frequency.linearRampToValueAtTime(880, now + 0.15); // A5
+      osc.frequency.linearRampToValueAtTime(1046.5, now + 0.28); // C6
+
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.linearRampToValueAtTime(0.25, now + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.45);
+    } catch {}
+  }
+
+  // Warm chime / pop when holding hands
+  playHandHold() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      [659.25, 830.61, 987.77].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + i * 0.05);
+
+        gain.gain.setValueAtTime(0.18, now + i * 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.35);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + i * 0.05);
+        osc.stop(now + i * 0.05 + 0.35);
+      });
+    } catch {}
+  }
+
+  // Upward whoosh for fireworks launch
+  playFireworkLaunch() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(1200, now + 0.4);
+
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.4);
+    } catch {}
+  }
+
+  // Crackling burst for fireworks explosion
+  playFireworkBurst() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const bufferSize = Math.floor(ctx.sampleRate * 0.45);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-4 * (i / bufferSize));
+      }
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(1200, ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.45);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.35, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      noise.start();
+    } catch {}
+  }
 }
 
 export const sfx = new SoundEffectManager();

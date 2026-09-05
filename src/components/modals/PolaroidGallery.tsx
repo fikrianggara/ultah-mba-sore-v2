@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, Heart, ZoomIn } from 'lucide-react';
+import { X, Sparkles, Heart, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PHOTO_ITEMS } from '../../data/photos';
 import { PhotoItem } from '../../types';
 import { sfx } from '../../utils/audio';
@@ -13,6 +13,7 @@ interface PolaroidGalleryProps {
 export const PolaroidGallery: React.FC<PolaroidGalleryProps> = ({ isOpen, onClose }) => {
   const [activeFilter, setActiveFilter] = useState<'all' | 'moment' | 'cute' | 'sweet' | 'special'>('all');
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
+  const touchStartX = React.useRef<number>(0);
 
   const filteredPhotos = activeFilter === 'all'
     ? PHOTO_ITEMS
@@ -22,6 +23,45 @@ export const PolaroidGallery: React.FC<PolaroidGalleryProps> = ({ isOpen, onClos
     setSelectedPhoto(photo);
     sfx.playChime();
   };
+
+  const handlePrevPhoto = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!selectedPhoto) return;
+    const currentIndex = filteredPhotos.findIndex((p) => p.id === selectedPhoto.id);
+    if (currentIndex > 0) {
+      setSelectedPhoto(filteredPhotos[currentIndex - 1]);
+      sfx.playChime();
+    } else {
+      setSelectedPhoto(filteredPhotos[filteredPhotos.length - 1]);
+    }
+  };
+
+  const handleNextPhoto = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!selectedPhoto) return;
+    const currentIndex = filteredPhotos.findIndex((p) => p.id === selectedPhoto.id);
+    if (currentIndex < filteredPhotos.length - 1) {
+      setSelectedPhoto(filteredPhotos[currentIndex + 1]);
+      sfx.playChime();
+    } else {
+      setSelectedPhoto(filteredPhotos[0]);
+    }
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.changedTouches[0].clientX;
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchEndX - touchStartX.current;
+    if (diff > 50) {
+      handlePrevPhoto();
+    } else if (diff < -50) {
+      handleNextPhoto();
+    }
+  };
+
 
   return (
     <AnimatePresence>
@@ -143,9 +183,29 @@ export const PolaroidGallery: React.FC<PolaroidGalleryProps> = ({ isOpen, onClos
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+                className="fixed inset-0 z-60 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 select-none"
                 onClick={() => setSelectedPhoto(null)}
+                onTouchStart={onTouchStart}
+                onTouchEnd={onTouchEnd}
               >
+                {/* Previous Photo Button */}
+                <button
+                  onClick={handlePrevPhoto}
+                  className="hidden sm:flex absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md items-center justify-center transition-all z-10"
+                  title="Foto Sebelumnya (Swipe Kiri)"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+
+                {/* Next Photo Button */}
+                <button
+                  onClick={handleNextPhoto}
+                  className="hidden sm:flex absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md items-center justify-center transition-all z-10"
+                  title="Foto Selanjutnya (Swipe Kanan)"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+
                 <motion.div
                   initial={{ scale: 0.85 }}
                   animate={{ scale: 1 }}
@@ -155,12 +215,12 @@ export const PolaroidGallery: React.FC<PolaroidGalleryProps> = ({ isOpen, onClos
                 >
                   <button
                     onClick={() => setSelectedPhoto(null)}
-                    className="absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center"
+                    className="absolute top-4 right-4 w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center z-10"
                   >
                     <X className="w-5 h-5" />
                   </button>
 
-                  <div className="rounded-2xl overflow-hidden max-h-[60vh] bg-black/5 mb-4 flex items-center justify-center">
+                  <div className="rounded-2xl overflow-hidden max-h-[60vh] bg-black/5 mb-4 flex items-center justify-center relative">
                     <img
                       src={`assets/images/${selectedPhoto.filename}`}
                       alt={selectedPhoto.title}
@@ -173,6 +233,9 @@ export const PolaroidGallery: React.FC<PolaroidGalleryProps> = ({ isOpen, onClos
                   </h3>
                   <p className="text-sm text-gray-600 leading-relaxed font-sans px-4">
                     "{selectedPhoto.caption}"
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-2">
+                    💡 Geser (swipe) layar untuk melihat foto lainnya
                   </p>
                 </motion.div>
               </motion.div>

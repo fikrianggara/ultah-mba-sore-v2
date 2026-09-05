@@ -6,12 +6,14 @@ interface VirtualJoystickProps {
   onMove: (dx: number, dy: number) => void;
   onAction?: () => void;
   actionPrompt?: string | null;
+  onHorn?: () => void;
 }
 
 export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
   onMove,
   onAction,
   actionPrompt,
+  onHorn,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const knobRef = useRef<HTMLDivElement>(null);
@@ -115,7 +117,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
 
         {/* Horn Button */}
         <button
-          onClick={() => sfx.playHorn()}
+          onClick={() => (onHorn ? onHorn() : sfx.playHorn())}
           className="w-14 h-14 rounded-full bg-white/80 backdrop-blur-md border border-pink-200 shadow-lg text-rose-500 hover:bg-rose-50 flex flex-col items-center justify-center transition-transform active:scale-95"
           title="Klakson"
         >

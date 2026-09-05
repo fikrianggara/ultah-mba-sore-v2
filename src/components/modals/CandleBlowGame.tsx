@@ -7,15 +7,17 @@ import { sfx } from '../../utils/audio';
 interface CandleBlowGameProps {
   isOpen: boolean;
   onClose: () => void;
+  onBlown?: () => void;
 }
 
-export const CandleBlowGame: React.FC<CandleBlowGameProps> = ({ isOpen, onClose }) => {
+export const CandleBlowGame: React.FC<CandleBlowGameProps> = ({ isOpen, onClose, onBlown }) => {
   const [candles, setCandles] = useState<boolean[]>([true, true, true]);
 
   const activeCandlesCount = candles.filter(Boolean).length;
 
   const triggerConfetti = () => {
     sfx.playChime();
+    if (onBlown) onBlown();
 
     const count = 200;
     const defaults = {
