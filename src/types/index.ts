@@ -6,7 +6,11 @@ export type LandmarkType =
   | 'balloons'
   | 'wishing_well'
   | 'gift_box'
-  | 'scrapbook';
+  | 'scrapbook'
+  | 'fishing'
+  | 'love_mas_jo'
+  | 'pet_cat'
+  | 'pet_dog';
 
 export type TimeOfDay = 'day' | 'sunset' | 'night';
 
@@ -48,6 +52,8 @@ export interface ModalState {
     | 'scrapbook'
     | 'treasure_reward'
     | 'help'
+    | 'pet_cat'
+    | 'pet_dog'
     | null;
   selectedPhoto?: PhotoItem | null;
 }
@@ -70,6 +76,8 @@ export interface TreasureShard {
 }
 
 export type TravelMode = 'car' | 'motor' | 'walking';
+
+export type GraphicsQuality = 'high' | 'low';
 
 export type WalkingPartnerState = 'holding_hands' | 'roaming' | 'returning';
 

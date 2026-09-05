@@ -83,10 +83,17 @@ export function createHeartRoadShape(outerScale: number = 0.85, innerScale: numb
 }
 
 /**
- * Check if 3D coordinate (x, z) is inside the island playable area (including shallow water surf).
+ * Check if 3D coordinate (x, z) is on the romantic boardwalk pier extending into the water.
+ */
+export function isInsidePier(x: number, z: number): boolean {
+  return Math.abs(x) <= 1.6 && z >= 18.0 && z <= 27.2;
+}
+
+/**
+ * Check if 3D coordinate (x, z) is inside the island playable area (including beach & pier).
  */
 export function isInsideIsland(x: number, z: number): boolean {
-  return isInsideHeart(x, z, 1.25);
+  return isInsideHeart(x, z, 1.25) || isInsidePier(x, z);
 }
 
 /**

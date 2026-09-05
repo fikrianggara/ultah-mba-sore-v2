@@ -7,6 +7,9 @@ import { PlayerMotorcycle } from './PlayerMotorcycle';
 import { WalkingCharacters } from './WalkingCharacters';
 import { FireworksDisplay } from './FireworksDisplay';
 import { CinematicCamera } from './CinematicCamera';
+import { RomanticPier } from './RomanticPier';
+import { StreetLampsAndFauna } from './StreetLampsAndFauna';
+import { IslandPets } from './IslandPets';
 import { BirthdayCakeObject } from './BirthdayCakeObject';
 import { MailboxObject } from './MailboxObject';
 import { JukeboxObject } from './JukeboxObject';
@@ -17,7 +20,7 @@ import { BalloonsField } from './BalloonsField';
 import { SkyAndAtmosphere } from './SkyAndAtmosphere';
 import { TreasureHuntGems } from './TreasureHuntGems';
 import { LANDMARK_POSITIONS } from '../../utils/constants';
-import { LandmarkType, TimeOfDay, TreasureShard, TravelMode, WalkingPartnerState } from '../../types';
+import { LandmarkType, TimeOfDay, TreasureShard, TravelMode, WalkingPartnerState, GraphicsQuality } from '../../types';
 
 interface SceneCanvasProps {
   playerPos: [number, number, number];
@@ -37,6 +40,12 @@ interface SceneCanvasProps {
   fireworksActive: boolean;
   isCinematicTour: boolean;
   onCinematicTourEnd: () => void;
+  isSittingOnPier: boolean;
+  graphicsQuality?: GraphicsQuality;
+  onUpdateCatPos?: (pos: [number, number, number]) => void;
+  onUpdateDogPos?: (pos: [number, number, number]) => void;
+  onClickCat?: () => void;
+  onClickDog?: () => void;
 }
 
 export const SceneCanvas: React.FC<SceneCanvasProps> = ({
@@ -57,6 +66,12 @@ export const SceneCanvas: React.FC<SceneCanvasProps> = ({
   fireworksActive,
   isCinematicTour,
   onCinematicTourEnd,
+  isSittingOnPier,
+  graphicsQuality = 'high',
+  onUpdateCatPos,
+  onUpdateDogPos,
+  onClickCat,
+  onClickDog,
 }) => {
   const isNight = timeOfDay === 'night';
 
@@ -95,6 +110,21 @@ export const SceneCanvas: React.FC<SceneCanvasProps> = ({
         {/* Natural Organic Beach & Central Heart Lawn Terrain */}
         <IslandTerrain timeOfDay={timeOfDay} />
 
+        {/* Romantic Street Lamps along the Heart Road & Fauna (Butterflies/Fireflies) */}
+        <StreetLampsAndFauna timeOfDay={timeOfDay} graphicsQuality={graphicsQuality} />
+
+        {/* Free-roaming Island Pets (Cat & Dog) */}
+        <IslandPets
+          playerPos={playerPos}
+          onUpdateCatPos={onUpdateCatPos}
+          onUpdateDogPos={onUpdateDogPos}
+          onClickCat={onClickCat || (() => {})}
+          onClickDog={onClickDog || (() => {})}
+        />
+
+        {/* Romantic Wooden Boardwalk Pier extending into sea with sitting bench */}
+        <RomanticPier isSitting={isSittingOnPier} isNight={isNight} />
+
         {/* 1. Convertible Car (Active when travelMode === 'car') */}
         <PlayerVehicle
           initialPosition={carPos}
@@ -119,17 +149,17 @@ export const SceneCanvas: React.FC<SceneCanvasProps> = ({
           active={travelMode === 'motor'}
         />
 
-        {/* 3. On-Foot Walking Characters (Active when travelMode === 'walking') */}
+        {/* 3. On-Foot Walking Characters (Active when travelMode === 'walking' and not seated on bench) */}
         <WalkingCharacters
           initialPosition={playerPos}
           joystickInput={joystickInput}
           onPositionUpdate={onUpdatePlayerPos}
           partnerState={partnerState}
           onPartnerStateChange={onPartnerStateChange}
-          active={travelMode === 'walking'}
+          active={travelMode === 'walking' && !isSittingOnPier}
         />
 
-        {/* 4. Fireworks Display Celebration at Cake Plaza */}
+        {/* 4. Ultra-Grand Fireworks Display Celebration */}
         <FireworksDisplay active={fireworksActive} />
 
         {/* 3D Interactive Landmarks */}

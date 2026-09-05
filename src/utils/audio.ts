@@ -278,6 +278,121 @@ class SoundEffectManager {
       noise.start();
     } catch {}
   }
+
+  // Fishing reel ratchet click sound
+  playReelSound() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      [0, 0.04, 0.08, 0.12].forEach((offset) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(1400, now + offset);
+        osc.frequency.exponentialRampToValueAtTime(700, now + offset + 0.025);
+
+        gain.gain.setValueAtTime(0.12, now + offset);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.025);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.025);
+      });
+    } catch {}
+  }
+
+  // Water splash bite sound
+  playFishBite() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(400, now);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } catch {}
+  }
+
+  // Multi-blast grand fireworks finale
+  playGrandFireworks() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      [0, 0.15, 0.3, 0.45].forEach((delay) => {
+        setTimeout(() => {
+          this.playFireworkBurst();
+        }, delay * 1000);
+      });
+    } catch {}
+  }
+
+  // Cute cat meow sound ("Meoow~")
+  playCatMeow() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(780, now + 0.15);
+      osc.frequency.exponentialRampToValueAtTime(620, now + 0.38);
+
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.25, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.42);
+    } catch {}
+  }
+
+  // Playful dog bark ("Woof woof!")
+  playDogBark() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+    try {
+      const now = ctx.currentTime;
+      [0, 0.14].forEach((delay) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320, now + delay);
+        osc.frequency.exponentialRampToValueAtTime(140, now + delay + 0.09);
+
+        gain.gain.setValueAtTime(0.28, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.09);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(now + delay);
+        osc.stop(now + delay + 0.09);
+      });
+    } catch {}
+  }
 }
 
 export const sfx = new SoundEffectManager();

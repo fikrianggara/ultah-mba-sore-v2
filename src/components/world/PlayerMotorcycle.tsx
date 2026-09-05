@@ -14,7 +14,7 @@ interface PlayerMotorcycleProps {
 }
 
 export const PlayerMotorcycle: React.FC<PlayerMotorcycleProps> = ({
-  initialPosition = [3, 0.06, 2],
+  initialPosition = [4.0, 0.06, 6.0],
   initialRotation = -Math.PI / 4,
   joystickInput,
   onPositionUpdate,

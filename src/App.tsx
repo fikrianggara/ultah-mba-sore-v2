@@ -11,9 +11,12 @@ import { WishingWellModal } from './components/modals/WishingWellModal';
 import { SurpriseGiftModal } from './components/modals/SurpriseGiftModal';
 import { ScrapbookModal } from './components/modals/ScrapbookModal';
 import { TreasureRewardModal } from './components/modals/TreasureRewardModal';
+import { MasJoLoveModal } from './components/modals/MasJoLoveModal';
+import { FishingGameModal } from './components/modals/FishingGameModal';
+import { PetInteractionModal } from './components/modals/PetInteractionModal';
 import { INITIAL_SHARDS } from './components/world/TreasureHuntGems';
 import { LANDMARKS, VEHICLE_CONFIG } from './utils/constants';
-import { LandmarkType, LandmarkInfo, TimeOfDay, TreasureShard, TravelMode, WalkingPartnerState } from './types';
+import { LandmarkType, LandmarkInfo, TimeOfDay, TreasureShard, TravelMode, WalkingPartnerState, GraphicsQuality } from './types';
 import { bgm, sfx } from './utils/audio';
 
 export const App: React.FC = () => {
@@ -25,14 +28,27 @@ export const App: React.FC = () => {
   const [partnerState, setPartnerState] = useState<WalkingPartnerState>('holding_hands');
   const [playerPos, setPlayerPos] = useState<[number, number, number]>([0, 0.06, 5]);
   const [carPos, setCarPos] = useState<[number, number, number]>([0, 0.06, 5]);
-  const [motorPos, setMotorPos] = useState<[number, number, number]>([3, 0.06, 2]);
+  const [motorPos, setMotorPos] = useState<[number, number, number]>([4.0, 0.06, 6.0]);
+  const [isSittingOnPier, setIsSittingOnPier] = useState<boolean>(false);
 
-  // Controls & Atmosphere
+  // Free-roaming Pets Positions
+  const [catPos, setCatPos] = useState<[number, number, number]>([2.5, 0.06, 2.5]);
+  const [dogPos, setDogPos] = useState<[number, number, number]>([-2.8, 0.06, 3.0]);
+
+  // Controls & Atmosphere (Default is 'sunset' - suasana sore hari romantis untuk Mba Sore!)
   const [joystickInput, setJoystickInput] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('day');
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('sunset');
+  const [graphicsQuality, setGraphicsQuality] = useState<GraphicsQuality>('high');
   const [shards, setShards] = useState<TreasureShard[]>(INITIAL_SHARDS);
   const [isCinematicTour, setIsCinematicTour] = useState<boolean>(false);
   const [fireworksActive, setFireworksActive] = useState<boolean>(false);
+
+  // Proximity to pets
+  const distToCat = Math.hypot(playerPos[0] - catPos[0], playerPos[2] - catPos[2]);
+  const isNearCat = distToCat < 2.8;
+
+  const distToDog = Math.hypot(playerPos[0] - dogPos[0], playerPos[2] - dogPos[2]);
+  const isNearDog = distToDog < 2.8;
 
   // Proximity to parked vehicles when walking
   const distToCar = Math.hypot(playerPos[0] - carPos[0], playerPos[2] - carPos[2]);
@@ -40,6 +56,11 @@ export const App: React.FC = () => {
 
   const distToMotor = Math.hypot(playerPos[0] - motorPos[0], playerPos[2] - motorPos[2]);
   const isNearMotor = travelMode === 'walking' && distToMotor < 3.2;
+
+  // Proximity to Romantic Pier Bench [0, 0.04, 25.7]
+  const distToPierBench = Math.hypot(playerPos[0] - 0, playerPos[2] - 25.7);
+  const isNearPierBench = travelMode === 'walking' && distToPierBench < 3.0;
+  const isOnPier = playerPos[2] >= 18.2 && playerPos[2] <= 27.5 && Math.abs(playerPos[0]) <= 2.2;
 
   // Calculate closest landmark
   const nearbyLandmark = useMemo<LandmarkInfo | null>(() => {
@@ -52,16 +73,32 @@ export const App: React.FC = () => {
     return null;
   }, [playerPos]);
 
-  // Handle keyboard shortcuts (E for landmark, F for mount/dismount, Escape for modal)
+  // Handle keyboard shortcuts (E for landmark / sitting, F for mount/dismount, Escape for modal)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'KeyE' && nearbyLandmark && !activeModal) {
-        setActiveModal(nearbyLandmark.id);
+      if (e.code === 'KeyE' && !activeModal) {
+        if (isSittingOnPier) {
+          setIsSittingOnPier(false);
+          sfx.playChime();
+        } else if (isNearPierBench) {
+          setIsSittingOnPier(true);
+          sfx.playHandHold();
+        } else if (isNearCat) {
+          setActiveModal('pet_cat');
+        } else if (isNearDog) {
+          setActiveModal('pet_dog');
+        } else if (nearbyLandmark) {
+          setActiveModal(nearbyLandmark.id);
+        }
       }
-      if (e.code === 'Escape' && activeModal) {
-        setActiveModal(null);
+      if (e.code === 'Escape') {
+        if (isSittingOnPier) {
+          setIsSittingOnPier(false);
+        } else if (activeModal) {
+          setActiveModal(null);
+        }
       }
-      if (e.code === 'KeyF' && !activeModal) {
+      if (e.code === 'KeyF' && !activeModal && !isSittingOnPier) {
         if (travelMode === 'car') {
           // Dismount car to walking
           setTravelMode('walking');
@@ -90,7 +127,7 @@ export const App: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [nearbyLandmark, activeModal, travelMode, isNearCar, isNearMotor, carPos, motorPos]);
+  }, [nearbyLandmark, activeModal, travelMode, isNearCar, isNearMotor, isNearPierBench, isSittingOnPier, carPos, motorPos, isNearCat, isNearDog]);
 
   const handleStartAdventure = async () => {
     setWelcomeOpen(false);
@@ -124,6 +161,11 @@ export const App: React.FC = () => {
     sfx.playChime();
   };
 
+  const handleToggleGraphicsQuality = () => {
+    setGraphicsQuality((prev) => (prev === 'high' ? 'low' : 'high'));
+    sfx.playChime();
+  };
+
   const handleCollectShard = (id: number) => {
     setShards((prev) => {
       const updated = prev.map((s) => (s.id === id ? { ...s, isCollected: true } : s));
@@ -145,10 +187,10 @@ export const App: React.FC = () => {
 
   const handleTriggerFireworks = () => {
     setFireworksActive(true);
-    sfx.playChime();
+    sfx.playGrandFireworks();
     setTimeout(() => {
       setFireworksActive(false);
-    }, 12000); // 12-second firework show
+    }, 14000); // 14-second grand celebration firework show
   };
 
   const handleChangeTravelMode = (mode: TravelMode) => {
@@ -159,20 +201,55 @@ export const App: React.FC = () => {
         setPlayerPos([motorPos[0] + 0.8, 0.06, motorPos[2]]);
       }
       setPartnerState('holding_hands');
+      setIsSittingOnPier(false);
     } else if (mode === 'car') {
       setPlayerPos(carPos);
+      setIsSittingOnPier(false);
     } else if (mode === 'motor') {
       setPlayerPos(motorPos);
+      setIsSittingOnPier(false);
     }
     setTravelMode(mode);
   };
 
   const handleJoystickMove = useCallback((dx: number, dy: number) => {
-    setJoystickInput({ x: dx, y: dy });
-  }, []);
+    if (!isSittingOnPier) {
+      setJoystickInput({ x: dx, y: dy });
+    }
+  }, [isSittingOnPier]);
 
-  // Action Button on Mobile
+  // Contextual Action Button on Mobile
   const actionConfig = useMemo<{ prompt: string; action: () => void } | null>(() => {
+    if (isSittingOnPier) {
+      return {
+        prompt: 'Berdiri Kembali [E]',
+        action: () => setIsSittingOnPier(false),
+      };
+    }
+    if (isNearPierBench) {
+      return {
+        prompt: 'Duduk di Dermaga 🌊',
+        action: () => setIsSittingOnPier(true),
+      };
+    }
+    if (isOnPier) {
+      return {
+        prompt: 'Mancing 🎣',
+        action: () => setActiveModal('fishing'),
+      };
+    }
+    if (isNearCat) {
+      return {
+        prompt: 'Elus Kucing 🐱',
+        action: () => setActiveModal('pet_cat'),
+      };
+    }
+    if (isNearDog) {
+      return {
+        prompt: 'Ajak Main Husky 🐶',
+        action: () => setActiveModal('pet_dog'),
+      };
+    }
     if (nearbyLandmark) {
       return {
         prompt: `Buka ${nearbyLandmark.title}`,
@@ -192,9 +269,13 @@ export const App: React.FC = () => {
           action: () => handleChangeTravelMode('motor'),
         };
       }
+      return {
+        prompt: 'Ajak Bicara Mas Jo ❤️',
+        action: () => setActiveModal('love_mas_jo'),
+      };
     }
     return null;
-  }, [nearbyLandmark, travelMode, isNearCar, isNearMotor]);
+  }, [nearbyLandmark, travelMode, isNearCar, isNearMotor, isNearPierBench, isSittingOnPier, isOnPier, isNearCat, isNearDog]);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden select-none bg-[#FFEFEF]">
@@ -217,6 +298,12 @@ export const App: React.FC = () => {
         fireworksActive={fireworksActive}
         isCinematicTour={isCinematicTour}
         onCinematicTourEnd={() => setIsCinematicTour(false)}
+        isSittingOnPier={isSittingOnPier}
+        graphicsQuality={graphicsQuality}
+        onUpdateCatPos={setCatPos}
+        onUpdateDogPos={setDogPos}
+        onClickCat={() => setActiveModal('pet_cat')}
+        onClickDog={() => setActiveModal('pet_dog')}
       />
 
       {/* Floating HUD with Radar, Mode Switchers, Tour, and Controls */}
@@ -227,6 +314,8 @@ export const App: React.FC = () => {
         onHorn={() => (travelMode === 'motor' ? sfx.playMotorHorn() : sfx.playHorn())}
         timeOfDay={timeOfDay}
         onToggleTimeOfDay={handleToggleTimeOfDay}
+        graphicsQuality={graphicsQuality}
+        onToggleGraphicsQuality={handleToggleGraphicsQuality}
         shards={shards}
         playerPos={playerPos}
         carPos={carPos}
@@ -241,6 +330,13 @@ export const App: React.FC = () => {
         onSkipTour={() => setIsCinematicTour(false)}
         onTriggerFireworks={handleTriggerFireworks}
         fireworksActive={fireworksActive}
+        isSittingOnPier={isSittingOnPier}
+        onToggleSittingPier={() => setIsSittingOnPier((prev) => !prev)}
+        onOpenFishing={() => setActiveModal('fishing')}
+        onOpenLoveModal={() => setActiveModal('love_mas_jo')}
+        isNearCat={isNearCat}
+        isNearDog={isNearDog}
+        onOpenPetModal={(type) => setActiveModal(type === 'cat' ? 'pet_cat' : 'pet_dog')}
       />
 
       {/* Mobile Virtual Joystick & Contextual Action Button */}
@@ -298,6 +394,25 @@ export const App: React.FC = () => {
         isOpen={activeModal === 'treasure_reward'}
         onClose={() => setActiveModal(null)}
         onOpenScrapbook={() => setActiveModal('scrapbook')}
+      />
+
+      {/* Komponen Cinta Mas Jo & Mba Sore */}
+      <MasJoLoveModal
+        isOpen={activeModal === 'love_mas_jo'}
+        onClose={() => setActiveModal(null)}
+      />
+
+      {/* Mini-Game Memancing di Dermaga */}
+      <FishingGameModal
+        isOpen={activeModal === 'fishing'}
+        onClose={() => setActiveModal(null)}
+      />
+
+      {/* Interaksi Anabul Kucing & Anjing */}
+      <PetInteractionModal
+        isOpen={activeModal === 'pet_cat' || activeModal === 'pet_dog'}
+        onClose={() => setActiveModal(null)}
+        petType={activeModal === 'pet_cat' ? 'cat' : 'dog'}
       />
     </div>
   );

@@ -88,27 +88,27 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
   }, [onMove]);
 
   return (
-    <div className="fixed bottom-6 inset-x-6 z-30 pointer-events-none flex items-end justify-between select-none">
-      {/* Joystick base on bottom-left */}
+    <div className="fixed bottom-20 sm:bottom-6 inset-x-4 sm:inset-x-6 z-30 pointer-events-none flex items-end justify-between select-none">
+      {/* Joystick base on bottom-left (above bottom navbar on mobile) */}
       <div
         ref={containerRef}
-        className="w-28 h-28 rounded-full bg-white/40 backdrop-blur-md border-2 border-white/60 shadow-lg pointer-events-auto flex items-center justify-center relative touch-none"
+        className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-white/50 backdrop-blur-md border-2 border-white/80 shadow-xl pointer-events-auto flex items-center justify-center relative touch-none"
       >
         <div
           ref={knobRef}
-          className="w-12 h-12 rounded-full bg-gradient-to-tr from-pink-500 to-rose-400 shadow-md border-2 border-white pointer-events-none transition-transform duration-75"
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-tr from-pink-500 to-rose-400 shadow-md border-2 border-white pointer-events-none transition-transform duration-75"
         />
-        <span className="absolute bottom-2 text-[9px] font-bold text-gray-500 uppercase tracking-wider">
+        <span className="absolute bottom-1.5 sm:bottom-2 text-[8px] sm:text-[9px] font-bold text-gray-500 uppercase tracking-wider">
           Kemudi
         </span>
       </div>
 
       {/* Action buttons on bottom-right */}
-      <div className="flex flex-col gap-3 pointer-events-auto items-end">
+      <div className="flex flex-col gap-2 sm:gap-3 pointer-events-auto items-end">
         {actionPrompt && onAction && (
           <button
             onClick={onAction}
-            className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-rose-500 text-white font-bold text-sm shadow-xl shadow-rose-400/40 border-2 border-white flex items-center gap-2 animate-bounce"
+            className="px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-rose-500 text-white font-bold text-xs sm:text-sm shadow-xl shadow-rose-400/40 border-2 border-white flex items-center gap-2 animate-bounce"
           >
             <Sparkles className="w-4 h-4" />
             <span>{actionPrompt}</span>
@@ -118,11 +118,11 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
         {/* Horn Button */}
         <button
           onClick={() => (onHorn ? onHorn() : sfx.playHorn())}
-          className="w-14 h-14 rounded-full bg-white/80 backdrop-blur-md border border-pink-200 shadow-lg text-rose-500 hover:bg-rose-50 flex flex-col items-center justify-center transition-transform active:scale-95"
+          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/85 backdrop-blur-md border border-pink-200 shadow-xl text-rose-500 hover:bg-rose-50 flex flex-col items-center justify-center transition-transform active:scale-95 pointer-events-auto"
           title="Klakson"
         >
-          <Volume2 className="w-5 h-5" />
-          <span className="text-[8px] font-bold mt-0.5">TIN TIN!</span>
+          <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span className="text-[7px] sm:text-[8px] font-bold mt-0.5">TIN TIN!</span>
         </button>
       </div>
     </div>

@@ -5,6 +5,7 @@ import {
   createHeartRoadShape,
   isInsideIsland,
   isInsideHeart,
+  isInsidePier,
 } from '../utils/heartGeometry';
 
 describe('Heart & Organic Island Geometry', () => {
@@ -35,6 +36,17 @@ describe('Heart & Organic Island Geometry', () => {
   it('detects far off points as outside island', () => {
     expect(isInsideIsland(60, 60)).toBe(false);
     expect(isInsideIsland(-60, 0)).toBe(false);
+  });
+
+  it('verifies romantic pier walkway over ocean water', () => {
+    // On the pier walkway extending into water (e.g. Z = 24, X = 0)
+    expect(isInsidePier(0, 24)).toBe(true);
+    expect(isInsideIsland(0, 24)).toBe(true);
+    // At the end pier bench (Z = 25.7, X = 0)
+    expect(isInsidePier(0, 25.7)).toBe(true);
+    expect(isInsideIsland(0, 25.7)).toBe(true);
+    // Deep ocean off to the side of the pier (Z = 24, X = 10)
+    expect(isInsidePier(10, 24)).toBe(false);
   });
 
   it('verifies heart interior test', () => {

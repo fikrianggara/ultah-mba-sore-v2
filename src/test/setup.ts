@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 
 // Mock Web Audio API for tests
 class MockAudioContext {
@@ -63,3 +64,9 @@ Object.defineProperty(window, 'AudioContext', {
 // Mock HTMLMediaElement play/pause
 window.HTMLMediaElement.prototype.play = () => Promise.resolve();
 window.HTMLMediaElement.prototype.pause = () => {};
+
+// Mock canvas-confetti for headless environment
+vi.mock('canvas-confetti', () => ({
+  default: vi.fn(),
+}));
+

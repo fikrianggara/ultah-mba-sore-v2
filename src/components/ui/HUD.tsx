@@ -22,6 +22,10 @@ import {
   Flame,
   Heart,
   UserCheck,
+  Fish,
+  Anchor,
+  MessageCircleHeart,
+  Zap,
 } from 'lucide-react';
 import {
   LandmarkType,
@@ -30,6 +34,7 @@ import {
   TreasureShard,
   TravelMode,
   WalkingPartnerState,
+  GraphicsQuality,
 } from '../../types';
 import { bgm, sfx } from '../../utils/audio';
 import { TreasureRadar } from './TreasureRadar';
@@ -55,6 +60,15 @@ interface HUDProps {
   onSkipTour?: () => void;
   onTriggerFireworks?: () => void;
   fireworksActive?: boolean;
+  isSittingOnPier?: boolean;
+  onToggleSittingPier?: () => void;
+  onOpenFishing?: () => void;
+  onOpenLoveModal?: () => void;
+  graphicsQuality?: GraphicsQuality;
+  onToggleGraphicsQuality?: () => void;
+  isNearCat?: boolean;
+  isNearDog?: boolean;
+  onOpenPetModal?: (type: 'cat' | 'dog') => void;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -67,7 +81,7 @@ export const HUD: React.FC<HUDProps> = ({
   shards,
   playerPos,
   carPos = [0, 0.06, 5],
-  motorPos = [3, 0.06, 2],
+  motorPos = [4.0, 0.06, 6.0],
   travelMode = 'car',
   onChangeTravelMode = () => {},
   partnerState = 'holding_hands',
@@ -78,6 +92,15 @@ export const HUD: React.FC<HUDProps> = ({
   onSkipTour = () => {},
   onTriggerFireworks = () => {},
   fireworksActive = false,
+  isSittingOnPier = false,
+  onToggleSittingPier = () => {},
+  onOpenFishing = () => {},
+  onOpenLoveModal = () => {},
+  graphicsQuality = 'high',
+  onToggleGraphicsQuality = () => {},
+  isNearCat = false,
+  isNearDog = false,
+  onOpenPetModal = () => {},
 }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(bgm.getIsPlaying());
   const [isMuted, setIsMuted] = useState<boolean>(false);
@@ -120,6 +143,13 @@ export const HUD: React.FC<HUDProps> = ({
 
   const distToMotor = Math.hypot(playerPos[0] - motorPos[0], playerPos[2] - motorPos[2]);
   const isNearMotor = travelMode === 'walking' && distToMotor < 3.2;
+
+  // Check proximity to Romantic Pier Bench [0, 0.04, 25.7]
+  const distToPierBench = Math.hypot(playerPos[0] - 0, playerPos[2] - 25.7);
+  const isNearPierBench = travelMode === 'walking' && distToPierBench < 3.0;
+
+  // Check if player is on the Pier Boardwalk (outside island extending into sea)
+  const isOnPier = playerPos[2] >= 18.2 && playerPos[2] <= 27.5 && Math.abs(playerPos[0]) <= 2.2;
 
   return (
     <>
@@ -171,7 +201,7 @@ export const HUD: React.FC<HUDProps> = ({
             ) : timeOfDay === 'sunset' ? (
               <>
                 <Sunset className="w-4 h-4 text-orange-500" />
-                <span className="hidden md:inline">Senja</span>
+                <span className="hidden md:inline">Senja (Sore)</span>
               </>
             ) : (
               <>
@@ -179,6 +209,27 @@ export const HUD: React.FC<HUDProps> = ({
                 <span className="hidden md:inline">Malam</span>
               </>
             )}
+          </motion.button>
+
+          {/* Graphics Quality Switcher (Tinggi / Hemat) */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onToggleGraphicsQuality}
+            className="glass-pill px-2.5 sm:px-3 py-1.5 rounded-2xl flex items-center gap-1.5 text-xs font-semibold text-gray-700 shadow-sm hover:bg-white transition-colors"
+            title="Ubah Kualitas Grafik (Tinggi / Hemat FPS)"
+          >
+            <Zap
+              className={`w-3.5 h-3.5 ${
+                graphicsQuality === 'high' ? 'text-amber-500 fill-amber-400' : 'text-emerald-500 fill-emerald-400'
+              }`}
+            />
+            <span className="hidden sm:inline">
+              {graphicsQuality === 'high' ? 'Grafik: Tinggi' : 'Grafik: Hemat'}
+            </span>
+            <span className="sm:hidden">
+              {graphicsQuality === 'high' ? 'Tinggi' : 'Hemat'}
+            </span>
           </motion.button>
 
           {/* Music status pill */}
@@ -260,7 +311,7 @@ export const HUD: React.FC<HUDProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Proximity Interaction Prompt Banner */}
+      {/* Proximity Interaction Prompt Banner for Landmarks */}
       <AnimatePresence>
         {nearbyLandmark && !isCinematicTour && (
           <motion.div
@@ -290,9 +341,88 @@ export const HUD: React.FC<HUDProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Floating Action Controls Bar (Mode Turun/Naik, Gandengan, Kembang Api) */}
-      <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-35 pointer-events-auto flex flex-wrap items-center justify-center gap-2 px-3">
-        {/* 1. Dismount / Mount Actions */}
+      {/* Floating Action Controls Bar (Dermaga, Mas Jo Love Modal, Kendaraan, Gandengan, Kembang Api) */}
+      <div className="fixed bottom-[8.5rem] sm:bottom-20 left-1/2 -translate-x-1/2 z-35 pointer-events-auto flex flex-wrap items-center justify-center gap-2 px-3 max-w-[95vw]">
+        {/* 1. Romantic Pier Sitting & Fishing Actions */}
+        {isSittingOnPier && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onToggleSittingPier}
+            className="glass-pill px-4 py-2 rounded-2xl border-2 border-rose-400 bg-gradient-to-r from-rose-500 to-pink-500 text-white shadow-lg flex items-center gap-2 text-xs font-bold animate-bounce"
+          >
+            <span>🚶‍♀️</span>
+            <span>Berdiri Kembali [E]</span>
+          </motion.button>
+        )}
+
+        {!isSittingOnPier && isNearPierBench && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onToggleSittingPier}
+            className="glass-pill px-4 py-2 rounded-2xl border-2 border-sky-400 bg-gradient-to-r from-sky-500 to-teal-500 text-white shadow-lg flex items-center gap-2 text-xs font-bold animate-bounce"
+          >
+            <Anchor className="w-4 h-4" />
+            <span>Duduk Berdua di Dermaga 🌊 [E]</span>
+          </motion.button>
+        )}
+
+        {(isOnPier || isSittingOnPier) && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onOpenFishing}
+            className="glass-pill px-4 py-2 rounded-2xl border-2 border-emerald-400 bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg flex items-center gap-2 text-xs font-bold animate-pulse"
+          >
+            <Fish className="w-4 h-4" />
+            <span>Mulai Memancing 🎣</span>
+          </motion.button>
+        )}
+
+        {/* 2. Komponen Cinta (Interaksi dengan Mas Jo) */}
+        {travelMode === 'walking' && !isSittingOnPier && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onOpenLoveModal}
+            className="glass-pill px-3.5 py-2 rounded-2xl border border-rose-300 bg-white/90 hover:bg-white shadow-md flex items-center gap-1.5 text-xs font-bold text-rose-600"
+            title="Bicara atau dengarkan bisikan cinta Mas Jo"
+          >
+            <MessageCircleHeart className="w-4 h-4 text-rose-500 animate-pulse" />
+            <span>Ajak Bicara Mas Jo ❤️</span>
+          </motion.button>
+        )}
+
+        {/* 2b. Interaksi Kucing (Si Meong) */}
+        {isNearCat && !isSittingOnPier && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onOpenPetModal('cat')}
+            className="glass-pill px-3.5 py-2 rounded-2xl border-2 border-orange-300 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg flex items-center gap-1.5 text-xs font-bold animate-bounce"
+            title="Elus dan ajak main Si Meong"
+          >
+            <span>🐱</span>
+            <span>Elus Si Meong [E]</span>
+          </motion.button>
+        )}
+
+        {/* 2c. Interaksi Anjing (Si Husky Ceria) */}
+        {isNearDog && !isSittingOnPier && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onOpenPetModal('dog')}
+            className="glass-pill px-3.5 py-2 rounded-2xl border-2 border-indigo-300 bg-gradient-to-r from-slate-700 to-indigo-600 text-white shadow-lg flex items-center gap-1.5 text-xs font-bold animate-bounce"
+            title="Ajak main Si Husky"
+          >
+            <span>🐶</span>
+            <span>Ajak Main Si Husky [E]</span>
+          </motion.button>
+        )}
+
+        {/* 3. Dismount / Mount Actions */}
         {travelMode === 'car' && (
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -323,7 +453,7 @@ export const HUD: React.FC<HUDProps> = ({
           </motion.button>
         )}
 
-        {travelMode === 'walking' && isNearCar && (
+        {travelMode === 'walking' && isNearCar && !isSittingOnPier && (
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -338,7 +468,7 @@ export const HUD: React.FC<HUDProps> = ({
           </motion.button>
         )}
 
-        {travelMode === 'walking' && isNearMotor && (
+        {travelMode === 'walking' && isNearMotor && !isSittingOnPier && (
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -353,8 +483,8 @@ export const HUD: React.FC<HUDProps> = ({
           </motion.button>
         )}
 
-        {/* 2. Walking Hand-holding / Roaming controls */}
-        {travelMode === 'walking' && partnerState === 'holding_hands' && (
+        {/* 4. Walking Hand-holding / Roaming controls */}
+        {travelMode === 'walking' && !isSittingOnPier && partnerState === 'holding_hands' && (
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -370,7 +500,7 @@ export const HUD: React.FC<HUDProps> = ({
           </motion.button>
         )}
 
-        {travelMode === 'walking' && partnerState === 'roaming' && (
+        {travelMode === 'walking' && !isSittingOnPier && partnerState === 'roaming' && (
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -382,14 +512,14 @@ export const HUD: React.FC<HUDProps> = ({
           </motion.button>
         )}
 
-        {travelMode === 'walking' && partnerState === 'returning' && (
+        {travelMode === 'walking' && !isSittingOnPier && partnerState === 'returning' && (
           <div className="glass-pill px-3.5 py-2 rounded-2xl border border-rose-300 bg-rose-50 text-rose-600 shadow-sm flex items-center gap-2 text-xs font-bold animate-pulse">
             <span>🏃‍♂️</span>
             <span>Mas Jo sedang berlari ke kamu...</span>
           </div>
         )}
 
-        {/* 3. Fireworks celebration trigger */}
+        {/* 5. Fireworks celebration trigger */}
         {(isNearCake || fireworksActive) && (
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -463,11 +593,11 @@ export const HUD: React.FC<HUDProps> = ({
                 <p><b>S / Panah Bawah:</b> Mundur</p>
                 <p><b>A / D / Kiri / Kanan:</b> Belok</p>
                 <p><b>F:</b> Naik / Turun Kendaraan (Mobil / Motor)</p>
+                <p><b>E:</b> Buka Landmark / Duduk di Dermaga</p>
                 <p><b>Spasi:</b> Bunyikan Klakson 📯</p>
-                <p><b>E:</b> Buka Landmark terdekat</p>
-                <p><b>Tombol ☀️/🌅/🌙:</b> Ubah suasana Siang, Senja, atau Malam</p>
-                <p><b>💎 Radar:</b> Menunjukkan arah kepingan cinta terdekat</p>
-                <p><b>Panggil Mas Jo:</b> Tekan tombol saat Mas Jo roaming agar dia berlari kembali</p>
+                <p><b>Tombol 🌅 Senja:</b> Mode default Sore romantis</p>
+                <p><b>🎣 Memancing:</b> Berjalan ke ujung dermaga kayu untuk memancing</p>
+                <p><b>❤️ Komponen Cinta:</b> Tekan tombol "Ajak Bicara Mas Jo" untuk mendengar bisikan manis</p>
               </div>
               <button
                 onClick={() => setShowControlsHelp(false)}

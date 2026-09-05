@@ -355,6 +355,8 @@ export const WalkingCharacters: React.FC<WalkingCharactersProps> = ({
     }
   });
 
+  if (!active) return null;
+
   return (
     <group>
       {/* ========================================================

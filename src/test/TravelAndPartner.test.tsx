@@ -41,8 +41,8 @@ describe('TravelMode & Partner HUD Controls', () => {
         timeOfDay="day"
         onToggleTimeOfDay={vi.fn()}
         shards={mockShards}
-        playerPos={[3, 0.06, 2]}
-        motorPos={[3, 0.06, 2]}
+        playerPos={[4.0, 0.06, 6.0]}
+        motorPos={[4.0, 0.06, 6.0]}
         travelMode="motor"
         onChangeTravelMode={handleChangeMode}
       />
