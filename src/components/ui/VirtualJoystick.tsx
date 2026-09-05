@@ -1,0 +1,128 @@
+import React, { useRef, useEffect } from 'react';
+import { Sparkles, Volume2 } from 'lucide-react';
+import { sfx } from '../../utils/audio';
+
+interface VirtualJoystickProps {
+  onMove: (dx: number, dy: number) => void;
+  onAction?: () => void;
+  actionPrompt?: string | null;
+}
+
+export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
+  onMove,
+  onAction,
+  actionPrompt,
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const knobRef = useRef<HTMLDivElement>(null);
+  const touchIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const knob = knobRef.current;
+    if (!container || !knob) return;
+
+    let startX = 0;
+    let startY = 0;
+    const maxRadius = 40;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (touchIdRef.current !== null) return;
+      const touch = e.changedTouches[0];
+      touchIdRef.current = touch.identifier;
+
+      const rect = container.getBoundingClientRect();
+      startX = rect.left + rect.width / 2;
+      startY = rect.top + rect.height / 2;
+      updateKnob(touch.clientX, touch.clientY);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        if (touch.identifier === touchIdRef.current) {
+          updateKnob(touch.clientX, touch.clientY);
+          break;
+        }
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === touchIdRef.current) {
+          touchIdRef.current = null;
+          knob.style.transform = `translate(0px, 0px)`;
+          onMove(0, 0);
+          break;
+        }
+      }
+    };
+
+    const updateKnob = (clientX: number, clientY: number) => {
+      const dx = clientX - startX;
+      const dy = clientY - startY;
+      const dist = Math.hypot(dx, dy);
+      const angle = Math.atan2(dy, dx);
+
+      const cappedDist = Math.min(dist, maxRadius);
+      const clampedX = Math.cos(angle) * cappedDist;
+      const clampedY = Math.sin(angle) * cappedDist;
+
+      knob.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+      onMove(clampedX / maxRadius, clampedY / maxRadius);
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [onMove]);
+
+  return (
+    <div className="fixed bottom-6 inset-x-6 z-30 pointer-events-none flex items-end justify-between select-none">
+      {/* Joystick base on bottom-left */}
+      <div
+        ref={containerRef}
+        className="w-28 h-28 rounded-full bg-white/40 backdrop-blur-md border-2 border-white/60 shadow-lg pointer-events-auto flex items-center justify-center relative touch-none"
+      >
+        <div
+          ref={knobRef}
+          className="w-12 h-12 rounded-full bg-gradient-to-tr from-pink-500 to-rose-400 shadow-md border-2 border-white pointer-events-none transition-transform duration-75"
+        />
+        <span className="absolute bottom-2 text-[9px] font-bold text-gray-500 uppercase tracking-wider">
+          Kemudi
+        </span>
+      </div>
+
+      {/* Action buttons on bottom-right */}
+      <div className="flex flex-col gap-3 pointer-events-auto items-end">
+        {actionPrompt && onAction && (
+          <button
+            onClick={onAction}
+            className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-rose-500 text-white font-bold text-sm shadow-xl shadow-rose-400/40 border-2 border-white flex items-center gap-2 animate-bounce"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>{actionPrompt}</span>
+          </button>
+        )}
+
+        {/* Horn Button */}
+        <button
+          onClick={() => sfx.playHorn()}
+          className="w-14 h-14 rounded-full bg-white/80 backdrop-blur-md border border-pink-200 shadow-lg text-rose-500 hover:bg-rose-50 flex flex-col items-center justify-center transition-transform active:scale-95"
+          title="Klakson"
+        >
+          <Volume2 className="w-5 h-5" />
+          <span className="text-[8px] font-bold mt-0.5">TIN TIN!</span>
+        </button>
+      </div>
+    </div>
+  );
+};
